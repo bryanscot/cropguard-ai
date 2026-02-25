@@ -1,30 +1,68 @@
-import { useState } from "react";
-import { Globe, Info } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getStoredScans, clearScans } from "@/lib/storage";
+import { Globe, Info, Database, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 const SettingsPage = () => {
-  const [language, setLanguage] = useState("en");
+  const { language, setLanguage, t } = useLanguage();
+  const [scanCount, setScanCount] = useState(0);
+
+  // Load the current number of scans on mount
+  useEffect(() => {
+    const scans = getStoredScans();
+    setScanCount(scans.length);
+  }, []);
+
+  const handleClearHistory = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete all scan history? This cannot be undone.",
+      )
+    ) {
+      clearScans();
+      setScanCount(0);
+      toast.success("History cleared successfully");
+    }
+  };
 
   return (
-    <div className="min-h-screen pb-24 px-5 pt-8">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-foreground mb-1">Settings</h1>
-        <p className="text-muted-foreground text-sm mb-6">Customize your experience</p>
+    <div className="min-h-screen pb-24 px-5 pt-8 bg-background">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h1 className="text-2xl font-bold text-foreground mb-1">
+          {t("settings")}
+        </h1>
+        <p className="text-muted-foreground text-sm mb-6">{t("customize")}</p>
       </motion.div>
 
       <div className="space-y-4">
-        <Card>
+        {/* Language Card */}
+        <Card className="border-none shadow-sm rounded-2xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Globe className="h-4 w-4 text-primary" />
-              Language
+              {t("language")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger className="rounded-xl">
+            <Select
+              value={language}
+              onValueChange={(val: any) => setLanguage(val)}
+            >
+              <SelectTrigger className="rounded-xl border-muted bg-muted/30">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -38,18 +76,60 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Storage Management Section */}
+        <Card className="border-none shadow-sm rounded-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Database className="h-4 w-4 text-primary" />
+              Storage Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center bg-muted/20 p-3 rounded-xl">
+              <div>
+                <p className="text-xs font-medium text-foreground">
+                  Saved Scans
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {scanCount} out of 20 scans used
+                </p>
+              </div>
+              <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-500"
+                  style={{ width: `${(scanCount / 20) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <Button
+              variant="destructive"
+              className="w-full rounded-xl gap-2 h-11 text-xs font-bold"
+              onClick={handleClearHistory}
+              disabled={scanCount === 0}
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear All History
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* About Card */}
+        <Card className="border-none shadow-sm rounded-2xl bg-primary/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Info className="h-4 w-4 text-primary" />
-              About
+              {t("about")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              CropGuard AI v1.0 — AI-powered crop disease detection for farmers.
-              Built to help protect harvests worldwide.
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {t("description")}
             </p>
+            <div className="mt-4 pt-4 border-t border-primary/10 flex justify-between items-center text-[10px] font-bold text-primary">
+              <span>VERSION</span>
+              <span>1.0.4 (PRO)</span>
+            </div>
           </CardContent>
         </Card>
       </div>
