@@ -2,8 +2,9 @@
 export interface ScanResult {
   id: string;
   date: string;
-  imageUrl: string; // We will store a compressed version here
+  imageUrl: string;
   plantName: string;
+  scientificName?: string; // Add this line (marked optional with ?)
   diseaseName: string;
   status: "healthy" | "action_required";
   confidence: number;

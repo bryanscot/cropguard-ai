@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { ScanResult } from "@/lib/storage"; // Updated to point to your new storage types
+import { ScanResult } from "@/lib/storage";
+import { useLanguage } from "@/contexts/LanguageContext"; // Added for translation
 import {
   ArrowLeft,
   Leaf,
@@ -7,6 +8,7 @@ import {
   ShieldCheck,
   CheckCircle,
   Info,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +22,7 @@ import confetti from "canvas-confetti";
 const ResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage(); // Initialize translation hook
 
   // Retrieve scan data from navigation state
   const scan = location.state?.scan as ScanResult | undefined;
@@ -59,6 +62,7 @@ const ResultPage = () => {
   }
 
   const isHealthy = scan.status === "healthy";
+  const isLowConfidence = scan.confidence < 40; // Threshold for the warning badge
 
   return (
     <div className="min-h-screen pb-24 px-5 pt-6 bg-background">
@@ -69,7 +73,7 @@ const ResultPage = () => {
         className="mb-4 -ml-2 hover:bg-transparent"
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
-        Back to Dashboard
+        {t("home")}
       </Button>
 
       <motion.div
@@ -79,12 +83,21 @@ const ResultPage = () => {
       >
         {/* Image Preview Card */}
         {scan.imageUrl && (
-          <Card className="overflow-hidden mb-4 border-none shadow-md rounded-3xl">
+          <Card className="overflow-hidden mb-4 border-none shadow-md rounded-3xl relative">
             <img
               src={scan.imageUrl}
               alt={scan.plantName}
               className="w-full h-56 object-cover"
             />
+            {/* Low Confidence Warning Overlay */}
+            {isLowConfidence && (
+              <div className="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg animate-pulse">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase">
+                  Low Certainty
+                </span>
+              </div>
+            )}
           </Card>
         )}
 
@@ -102,14 +115,26 @@ const ResultPage = () => {
               >
                 {isHealthy ? "✅ Healthy" : "⚠️ Issue Detected"}
               </Badge>
+
+              {/* Primary: Common (Normal) Name */}
               <h2 className="text-xl font-bold text-foreground leading-tight">
                 {scan.plantName}
               </h2>
-              <p className="text-muted-foreground text-sm font-medium">
+
+              {/* Secondary: Scientific Name (Italicized) */}
+              {scan.scientificName && (
+                <p className="text-[11px] text-muted-foreground italic font-medium">
+                  {scan.scientificName}
+                </p>
+              )}
+
+              {/* Disease Name */}
+              <p className="text-muted-foreground text-sm font-medium mt-1">
                 {scan.diseaseName}
               </p>
+
               <p className="text-[10px] text-muted-foreground mt-2 opacity-70">
-                Scanned on {scan.date}
+                {scan.date}
               </p>
             </div>
           </CardContent>
@@ -188,7 +213,7 @@ const ResultPage = () => {
           <CardHeader className="bg-primary/5 pb-3">
             <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary">
               <ShieldCheck className="h-4 w-4" />
-              Prevention & Long-term Care
+              {t("prevention_title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
@@ -204,6 +229,23 @@ const ResultPage = () => {
             ))}
           </CardContent>
         </Card>
+
+        {/* Low Confidence Re-scan Suggestion */}
+        {isLowConfidence && (
+          <div className="mt-4 bg-yellow-50 border border-yellow-200 p-4 rounded-2xl">
+            <p className="text-xs text-yellow-800 leading-relaxed font-medium">
+              Note: The AI confidence is low. For a more accurate result, ensure
+              your photo is clear, centered, and well-lit before trying again.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full mt-3 border-yellow-300 text-yellow-800 hover:bg-yellow-100 rounded-xl h-10"
+              onClick={() => navigate("/scan")}
+            >
+              Re-scan Image
+            </Button>
+          </div>
+        )}
 
         <div className="mt-8 text-center px-4">
           <p className="text-[10px] text-muted-foreground leading-relaxed italic">
