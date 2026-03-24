@@ -29,7 +29,7 @@ const App = () => (
             v7_relativeSplatPath: true,
           }}
         >
-          <div className="mx-auto max-w-3xl min-h-screen bg-background relative">
+          <div className="mx-auto max-w-4xl min-h-screen bg-background relative">
             <AnimatePresence mode="wait">
               <Routes>
                 <Route path="/" element={<Index />} />
