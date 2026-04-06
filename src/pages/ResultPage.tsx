@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { ScanResult } from "@/lib/storage";
-import { useLanguage } from "@/contexts/LanguageContext"; // Added for translation
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   ArrowLeft,
   Leaf,
@@ -22,13 +22,11 @@ import confetti from "canvas-confetti";
 const ResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useLanguage(); // Initialize translation hook
+  const { t } = useLanguage();
 
-  // Retrieve scan data from navigation state
   const scan = location.state?.scan as ScanResult | undefined;
 
   useEffect(() => {
-    // Trigger celebration for healthy plants with high confidence
     if (scan?.status === "healthy" && scan.confidence >= 80) {
       confetti({
         particleCount: 100,
@@ -46,15 +44,15 @@ const ResultPage = () => {
           <div className="bg-muted w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Info className="text-muted-foreground w-8 h-8" />
           </div>
-          <h3 className="text-lg font-semibold mb-2">No Data Available</h3>
+          <h3 className="text-lg font-semibold mb-2">{t("no_data_title")}</h3>
           <p className="text-muted-foreground text-sm mb-6">
-            We couldn't find any scan results. Please try scanning a leaf again.
+            {t("no_data_body")}
           </p>
           <Button
             className="w-full rounded-xl"
             onClick={() => navigate("/scan")}
           >
-            Start New Scan
+            {t("start_new_scan")}
           </Button>
         </div>
       </div>
@@ -62,7 +60,7 @@ const ResultPage = () => {
   }
 
   const isHealthy = scan.status === "healthy";
-  const isLowConfidence = scan.confidence < 40; // Threshold for the warning badge
+  const isLowConfidence = scan.confidence < 40;
 
   return (
     <div className="min-h-screen pb-24 px-5 pt-6 bg-background">
@@ -81,7 +79,7 @@ const ResultPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Image Preview Card */}
+        {/* Image Preview */}
         {scan.imageUrl && (
           <Card className="overflow-hidden mb-4 border-none shadow-md rounded-3xl relative">
             <img
@@ -89,19 +87,18 @@ const ResultPage = () => {
               alt={scan.plantName}
               className="w-full h-56 object-cover"
             />
-            {/* Low Confidence Warning Overlay */}
             {isLowConfidence && (
               <div className="absolute top-4 right-4 bg-yellow-500 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg animate-pulse">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="text-[10px] font-bold uppercase">
-                  Low Certainty
+                  {t("low_certainty")}
                 </span>
               </div>
             )}
           </Card>
         )}
 
-        {/* Diagnosis Result Card */}
+        {/* Diagnosis Card */}
         <Card className="mb-4 border-none shadow-md rounded-3xl">
           <CardContent className="flex items-center gap-5 p-5">
             <RadialProgress value={scan.confidence} size={90} strokeWidth={8} />
@@ -113,26 +110,19 @@ const ResultPage = () => {
                     : "bg-orange-100 text-orange-700 hover:bg-orange-100 border-0"
                 }`}
               >
-                {isHealthy ? "✅ Healthy" : "⚠️ Issue Detected"}
+                {isHealthy ? t("healthy_badge") : t("issue_badge")}
               </Badge>
-
-              {/* Primary: Common (Normal) Name */}
               <h2 className="text-xl font-bold text-foreground leading-tight">
                 {scan.plantName}
               </h2>
-
-              {/* Secondary: Scientific Name (Italicized) */}
               {scan.scientificName && (
                 <p className="text-[11px] text-muted-foreground italic font-medium">
                   {scan.scientificName}
                 </p>
               )}
-
-              {/* Disease Name */}
               <p className="text-muted-foreground text-sm font-medium mt-1">
                 {scan.diseaseName}
               </p>
-
               <p className="text-[10px] text-muted-foreground mt-2 opacity-70">
                 {scan.date}
               </p>
@@ -140,7 +130,7 @@ const ResultPage = () => {
           </CardContent>
         </Card>
 
-        {/* Treatment Recommendation Section */}
+        {/* Treatment Tabs */}
         {!isHealthy && (
           <Tabs defaultValue="organic" className="mb-4">
             <TabsList className="w-full bg-muted/50 p-1 rounded-2xl h-12">
@@ -149,14 +139,14 @@ const ResultPage = () => {
                 className="rounded-xl flex-1 gap-1.5 data-[state=active]:shadow-sm"
               >
                 <Leaf className="h-3.5 w-3.5" />
-                Organic
+                {t("organic_tab")}
               </TabsTrigger>
               <TabsTrigger
                 value="chemical"
                 className="rounded-xl flex-1 gap-1.5 data-[state=active]:shadow-sm"
               >
                 <FlaskConical className="h-3.5 w-3.5" />
-                Chemical
+                {t("chemical_tab")}
               </TabsTrigger>
             </TabsList>
 
@@ -164,7 +154,7 @@ const ResultPage = () => {
               <Card className="border-none shadow-sm rounded-2xl">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-bold text-primary">
-                    Biological Solutions
+                    {t("biological_solutions")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -187,7 +177,7 @@ const ResultPage = () => {
               <Card className="border-none shadow-sm rounded-2xl">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-bold text-orange-600">
-                    Chemical Control
+                    {t("chemical_control")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -208,7 +198,7 @@ const ResultPage = () => {
           </Tabs>
         )}
 
-        {/* Prevention and Maintenance Card */}
+        {/* Prevention Card */}
         <Card className="border-none shadow-md rounded-3xl overflow-hidden">
           <CardHeader className="bg-primary/5 pb-3">
             <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary">
@@ -230,27 +220,25 @@ const ResultPage = () => {
           </CardContent>
         </Card>
 
-        {/* Low Confidence Re-scan Suggestion */}
+        {/* Low Confidence Warning */}
         {isLowConfidence && (
           <div className="mt-4 bg-yellow-50 border border-yellow-200 p-4 rounded-2xl">
             <p className="text-xs text-yellow-800 leading-relaxed font-medium">
-              Note: The AI confidence is low. For a more accurate result, ensure
-              your photo is clear, centered, and well-lit before trying again.
+              {t("low_confidence_note")}
             </p>
             <Button
               variant="outline"
               className="w-full mt-3 border-yellow-300 text-yellow-800 hover:bg-yellow-100 rounded-xl h-10"
               onClick={() => navigate("/scan")}
             >
-              Re-scan Image
+              {t("rescan")}
             </Button>
           </div>
         )}
 
         <div className="mt-8 text-center px-4">
           <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-            Disclaimer: AI diagnoses are for informational purposes. Consult a
-            local agricultural officer for severe infestations.
+            {t("disclaimer")}
           </p>
         </div>
       </motion.div>

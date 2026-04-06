@@ -1,16 +1,18 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, Camera, Clock, Settings } from "lucide-react";
 import { motion } from "framer-motion";
-
-const navItems = [
-  { to: "/", icon: Home, label: "Home" },
-  { to: "/scan", icon: Camera, label: "Scan" },
-  { to: "/history", icon: Clock, label: "History" },
-  { to: "/settings", icon: Settings, label: "Settings" },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const BottomNav = () => {
   const location = useLocation();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { to: "/", icon: Home, label: t("home") },
+    { to: "/scan", icon: Camera, label: t("scan") },
+    { to: "/history", icon: Clock, label: t("history") },
+    { to: "/settings", icon: Settings, label: t("settings") },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe">

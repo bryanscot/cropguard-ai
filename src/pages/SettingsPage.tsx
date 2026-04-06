@@ -1,5 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getStoredScans, clearScans } from "@/lib/storage";
+import { getStoredScans, clearScans, getScanCount } from "@/lib/storage";
 import { Globe, Info, Database, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,26 +15,26 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const SettingsPage = () => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, t, tWithCount } = useLanguage();
   const [scanCount, setScanCount] = useState(0);
 
   // Load the current number of scans on mount
   useEffect(() => {
-    const scans = getStoredScans();
-    setScanCount(scans.length);
+    // Replace:
+    // const scans = getStoredScans();
+    // setScanCount(scans.length);
+
+    // With:
+    getScanCount().then(setScanCount);
   }, []);
 
-  const handleClearHistory = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete all scan history? This cannot be undone.",
-      )
-    ) {
-      clearScans();
-      setScanCount(0);
-      toast.success("History cleared successfully");
-    }
-  };
+ const handleClearHistory = async () => {
+  if (window.confirm(t("clear_confirm"))) {
+    await clearScans();
+    setScanCount(0);
+    toast.success(t("history_cleared"));
+  }
+};
 
   return (
     <div className="min-h-screen pb-24 px-5 pt-8 bg-background">
@@ -86,20 +86,27 @@ const SettingsPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center bg-muted/20 p-3 rounded-xl">
-              <div>
+              {/* <div>
                 <p className="text-xs font-medium text-foreground">
                   Saved Scans
                 </p>
+                
                 <p className="text-[10px] text-muted-foreground">
-                  {scanCount} out of 20 scans used
+                  {tWithCount("scans_used", scanCount)}
+                </p>
+              </div> */}
+              
+            <div className="flex justify-between items-center bg-muted/20 p-3 rounded-xl">
+              <div>
+                <p className="text-xs font-medium text-foreground">{t("saved_scans")}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {tWithCount("scans_saved_count", scanCount)}
                 </p>
               </div>
-              <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all duration-500"
-                  style={{ width: `${(scanCount / 20) * 100}%` }}
-                />
+              <div className="bg-primary/10 px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-primary">{scanCount}</span>
               </div>
+            </div>
             </div>
 
             <Button

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ScanCardProps {
   scan: ScanResult;
@@ -12,6 +13,7 @@ interface ScanCardProps {
 
 const ScanCard = ({ scan, index = 0 }: ScanCardProps) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const isHealthy = scan.status === "healthy";
 
   return (
@@ -38,7 +40,9 @@ const ScanCard = ({ scan, index = 0 }: ScanCardProps) => {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground truncate">{scan.plantName}</h3>
+              <h3 className="font-semibold text-foreground truncate">
+                {scan.plantName}
+              </h3>
               <Badge
                 variant={isHealthy ? "default" : "secondary"}
                 className={`text-[10px] shrink-0 ${
@@ -47,14 +51,16 @@ const ScanCard = ({ scan, index = 0 }: ScanCardProps) => {
                     : "bg-warning/15 text-warning hover:bg-warning/20 border-0"
                 }`}
               >
-                {isHealthy ? "Healthy" : "Action Required"}
+                {isHealthy ? t("healthy") : t("action_required")}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{scan.diseaseName}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{scan.date}</p>
           </div>
           <div className="text-right shrink-0">
-            <span className="text-lg font-bold text-foreground">{scan.confidence}%</span>
+            <span className="text-lg font-bold text-foreground">
+              {scan.confidence}%
+            </span>
           </div>
         </CardContent>
       </Card>

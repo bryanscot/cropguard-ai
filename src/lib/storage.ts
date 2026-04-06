@@ -1,10 +1,15 @@
-// Define the interface locally to avoid the import conflict you had
+// src/lib/storage.ts
+// IndexedDB implementation — replaces LocalStorage
+// Capacity: ~50% of device free disk space vs localStorage's 5MB cap
+
+import { openDB, DBSchema, IDBPDatabase } from "idb";
+
 export interface ScanResult {
   id: string;
   date: string;
   imageUrl: string;
   plantName: string;
-  scientificName?: string; // Add this line (marked optional with ?)
+  scientificName?: string;
   diseaseName: string;
   status: "healthy" | "action_required";
   confidence: number;
@@ -13,57 +18,94 @@ export interface ScanResult {
   preventionTips: string[];
 }
 
-const STORAGE_KEY = "cropguard-scans";
+interface CropGuardDB extends DBSchema {
+  scans: {
+    key: string;
+    value: ScanResult;
+    indexes: {
+      "by-date": string;
+      "by-status": string;
+    };
+  };
+}
+
+const DB_NAME = "cropguard-db";
+const DB_VERSION = 1;
+const STORE = "scans";
+
+// Open (or create) the database
+async function getDB(): Promise<IDBPDatabase<CropGuardDB>> {
+  return openDB<CropGuardDB>(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      const store = db.createObjectStore(STORE, { keyPath: "id" });
+      store.createIndex("by-date", "date", { unique: false });
+      store.createIndex("by-status", "status", { unique: false });
+    },
+  });
+}
 
 /**
- * Retrieves scans from Local Storage.
+ * Save a new scan to IndexedDB.
+ * No arbitrary limit — stores as many as the device allows.
  */
-export function getStoredScans(): ScanResult[] {
+export async function saveScan(scan: ScanResult): Promise<void> {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const db = await getDB();
+    await db.put(STORE, scan);
   } catch (error) {
-    console.error("Error reading from Local Storage:", error);
+    console.error("IndexedDB save failed:", error);
+  }
+}
+
+/**
+ * Get all scans, sorted newest first.
+ */
+export async function getStoredScans(): Promise<ScanResult[]> {
+  try {
+    const db = await getDB();
+    const all = await db.getAll(STORE);
+    // Sort by date descending (newest first)
+    return all.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+  } catch (error) {
+    console.error("IndexedDB read failed:", error);
     return [];
   }
 }
 
 /**
- * Saves a new scan. To prevent QuotaExceededError, we limit
- * the history to the last 20 scans.
+ * Delete a single scan by ID.
  */
-export function saveScan(scan: ScanResult): void {
+export async function deleteScan(id: string): Promise<void> {
   try {
-    const scans = getStoredScans();
-    // Add new scan to the start
-    const updatedScans = [scan, ...scans];
-
-    // PERMANENT FIX: Keep only the last 20 scans to save space
-    const limitedScans = updatedScans.slice(0, 20);
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(limitedScans));
+    const db = await getDB();
+    await db.delete(STORE, id);
   } catch (error) {
-    console.error("LocalStorage is full! Clear your history.", error);
-    // Fallback: If it still fails, try clearing old data automatically
-    const scans = getStoredScans();
-    if (scans.length > 5) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(scans.slice(0, 5)));
-    }
+    console.error("IndexedDB delete failed:", error);
   }
 }
 
 /**
- * Clears all scan history.
+ * Clear all scans.
  */
-export function clearScans(): void {
-  localStorage.removeItem(STORAGE_KEY);
+export async function clearScans(): Promise<void> {
+  try {
+    const db = await getDB();
+    await db.clear(STORE);
+  } catch (error) {
+    console.error("IndexedDB clear failed:", error);
+  }
 }
 
 /**
- * Deletes a single scan by ID.
+ * Get total scan count.
  */
-export function deleteScan(id: string): void {
-  const scans = getStoredScans();
-  const filtered = scans.filter((s) => s.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+export async function getScanCount(): Promise<number> {
+  try {
+    const db = await getDB();
+    return await db.count(STORE);
+  } catch (error) {
+    return 0;
+  }
 }

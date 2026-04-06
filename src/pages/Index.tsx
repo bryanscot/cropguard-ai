@@ -7,24 +7,50 @@ import { mockScans } from "@/lib/mock-data";
 import { getStoredScans } from "@/lib/storage";
 import { motion } from "framer-motion";
 import heroCrop from "@/assets/hero-crop.jpg";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useState, useEffect } from "react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const storedScans = getStoredScans();
-  const allScans = storedScans.length > 0 ? storedScans : mockScans;
+  const { t } = useLanguage();
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return t("good_morning");
+    if (hour >= 12 && hour < 17) return t("good_afternoon");
+    if (hour >= 17 && hour < 21) return t("good_evening");
+    return t("good_night");
+  };
+  // Replace the two lines at the top of Dashboard:
+  // const storedScans = getStoredScans();
+  // const allScans = storedScans.length > 0 ? storedScans : mockScans;
+
+  // With this:
+  const [allScans, setAllScans] = useState(mockScans);
+
+  useEffect(() => {
+    getStoredScans().then((scans) => {
+      if (scans.length > 0) setAllScans(scans);
+    });
+  }, []);
   const recentScans = allScans.slice(0, 5);
 
   const stats = [
-    { icon: Leaf, label: "Total Scans", value: allScans.length, color: "text-primary" },
+    {
+      icon: Leaf,
+      label: t("total_scans"),
+      value: allScans.length,
+      color: "text-primary",
+    },
     {
       icon: Shield,
-      label: "Healthy",
+      label: t("healthy"),
       value: allScans.filter((s) => s.status === "healthy").length,
       color: "text-success",
     },
     {
       icon: TrendingUp,
-      label: "Issues Found",
+      label: t("issues_found"),
       value: allScans.filter((s) => s.status === "action_required").length,
       color: "text-warning",
     },
@@ -35,7 +61,11 @@ const Dashboard = () => {
       {/* Hero */}
       <div className="relative overflow-hidden rounded-b-3xl">
         <div className="absolute inset-0">
-          <img src={heroCrop} alt="Lush green crops" className="h-full w-full object-cover" />
+          <img
+            src={heroCrop}
+            alt="Lush green crops"
+            className="h-full w-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-hero" />
         </div>
         <div className="relative px-5 pb-8 pt-12">
@@ -46,13 +76,15 @@ const Dashboard = () => {
           >
             <div className="flex items-center gap-2 mb-1">
               <Leaf className="h-5 w-5 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/80">CropGuard AI</span>
+              <span className="text-sm font-medium text-primary-foreground/80">
+                CropGuard AI
+              </span>
             </div>
             <h1 className="text-2xl font-bold text-primary-foreground mb-1">
-              Good morning, Farmer! 🌱
+              {getGreeting()}
             </h1>
             <p className="text-primary-foreground/70 text-sm">
-              Keep your crops healthy with AI-powered diagnostics
+              {t("hero_subtitle")}
             </p>
           </motion.div>
 
@@ -68,7 +100,7 @@ const Dashboard = () => {
               onClick={() => navigate("/scan")}
             >
               <Camera className="mr-2 h-5 w-5" />
-              Scan New Plant
+              {t("scan_new_plant")}
             </Button>
           </motion.div>
         </div>
@@ -87,8 +119,12 @@ const Dashboard = () => {
               <Card className="border-border/40">
                 <CardContent className="flex flex-col items-center p-3">
                   <stat.icon className={`h-5 w-5 mb-1 ${stat.color}`} />
-                  <span className="text-xl font-bold text-foreground">{stat.value}</span>
-                  <span className="text-[10px] text-muted-foreground font-medium">{stat.label}</span>
+                  <span className="text-xl font-bold text-foreground">
+                    {stat.value}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-medium text-center">
+                    {stat.label}
+                  </span>
                 </CardContent>
               </Card>
             </motion.div>
@@ -99,14 +135,16 @@ const Dashboard = () => {
       {/* Recent Scans */}
       <div className="px-5 mt-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-foreground">Recent Scans</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            {t("recent_scans")}
+          </h2>
           <Button
             variant="ghost"
             size="sm"
             className="text-primary text-sm"
             onClick={() => navigate("/history")}
           >
-            View All
+            {t("view_all")}
           </Button>
         </div>
         <div className="space-y-3">
@@ -117,6 +155,6 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
+};;
 
 export default Dashboard;

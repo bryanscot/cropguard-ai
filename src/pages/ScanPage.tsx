@@ -8,9 +8,11 @@ import { analyzeWithPlantId } from "@/lib/plantid-service";
 import { saveScan } from "@/lib/storage";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ScanPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -21,10 +23,9 @@ const ScanPage = () => {
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image file.");
+      toast.error(t("upload_valid_image"));
       return;
     }
-
     setSelectedFile(file);
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
@@ -33,41 +34,35 @@ const ScanPage = () => {
 
   const handleAnalyze = async () => {
     if (!selectedFile || !preview) {
-      toast.error("Please select an image first.");
+      toast.error(t("select_image_first"));
       return;
     }
-
     setIsAnalyzing(true);
     try {
-      // 1. Call the real Gemini API
       const aiResponse = await analyzeWithPlantId(selectedFile);
-
-      // 2. Map the AI response to the strict ScanResult type
       const result = {
         id: Math.random().toString(36).substr(2, 9),
         date: new Date().toISOString().split("T")[0],
         imageUrl: preview,
         plantName: aiResponse.plantName || "Unknown Plant",
+        scientificName: aiResponse.scientificName || "",
         diseaseName: aiResponse.diseaseName || "Healthy",
-
-        // FIX: Explicitly cast to the allowed union type
-        status: (aiResponse.diseaseName === "Healthy"
+        status: (aiResponse.diseaseName === "Healthy" ||
+        aiResponse.diseaseName === t("healthy")
           ? "healthy"
           : "action_required") as "healthy" | "action_required",
-
         confidence: aiResponse.confidence || 90,
         organicTreatment: aiResponse.organicTreatment || [],
         chemicalTreatment: aiResponse.chemicalTreatment || [],
         preventionTips: aiResponse.preventionTips || [],
       };
-
-      // 3. Save to local storage and navigate
-      saveScan(result);
+      // To:
+      await saveScan(result);
       navigate(`/result/${result.id}`, { state: { scan: result } });
-      toast.success("Analysis complete!");
+      toast.success(t("analysis_complete"));
     } catch (err) {
       console.error("Analysis failed:", err);
-      toast.error("AI Analysis failed. Please check your internet or API key.");
+      toast.error(t("analysis_failed"));
     } finally {
       setIsAnalyzing(false);
     }
@@ -85,7 +80,10 @@ const ScanPage = () => {
       <div className="min-h-screen flex flex-col items-center justify-center pb-24 px-5 bg-background">
         <ScanningAnimation />
         <p className="mt-4 text-primary font-medium animate-pulse">
-          CropGuard AI is examining your crop...
+          {t("analyzing")}
+        </p>
+        <p className="mt-2 text-muted-foreground text-xs animate-pulse">
+          {t("translating")}
         </p>
       </div>
     );
@@ -98,10 +96,10 @@ const ScanPage = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-2xl font-bold text-foreground mb-1">
-          Scan Your Crop
+          {t("scan_your_crop")}
         </h1>
         <p className="text-muted-foreground text-sm mb-6">
-          Take a clear photo of the leaf for AI diagnosis
+          {t("scan_subtitle")}
         </p>
       </motion.div>
 
@@ -146,10 +144,10 @@ const ScanPage = () => {
               </div>
               <div className="text-center">
                 <p className="font-bold text-lg text-foreground">
-                  Drop leaf image here
+                  {t("drop_image")}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  or tap to browse files
+                  {t("tap_browse")}
                 </p>
               </div>
             </CardContent>
@@ -162,12 +160,11 @@ const ScanPage = () => {
               onClick={() => cameraInputRef.current?.click()}
             >
               <Camera className="mr-3 h-6 w-6" />
-              Take Picture
+              {t("take_picture")}
             </Button>
-
             <div className="flex items-center gap-2 px-2 text-[11px] text-muted-foreground italic">
               <AlertCircle className="h-3 w-3" />
-              <span>Ensure the leaf is well-lit and clearly visible.</span>
+              <span>{t("image_tip")}</span>
             </div>
           </div>
         </motion.div>
@@ -184,7 +181,6 @@ const ScanPage = () => {
               className="w-full h-80 object-cover"
             />
           </Card>
-
           <div className="grid grid-cols-2 gap-4">
             <Button
               variant="outline"
@@ -196,14 +192,14 @@ const ScanPage = () => {
               }}
             >
               <Upload className="mr-2 h-5 w-5" />
-              Retake
+              {t("retake")}
             </Button>
             <Button
               size="lg"
               className="h-14 rounded-2xl font-bold shadow-lg bg-primary text-primary-foreground"
               onClick={handleAnalyze}
             >
-              Analyze Plant
+              {t("analyze")}
             </Button>
           </div>
         </motion.div>

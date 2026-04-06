@@ -22,7 +22,9 @@
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
 
-    "baseUrl": ".",
+    /* REPLACED 'baseUrl': '.' 
+       The paths below are now relative to the tsconfig.json location.
+    */
     "paths": {
       "@/*": ["./src/*"]
     }
